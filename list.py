@@ -1,7 +1,7 @@
 import sqlite3
 
 # Replace 'your_database.db' with the path to your .db file
-db_file = 'your_database.db'
+db_file = 'feedback.db'
 
 # Connect to the database
 conn = sqlite3.connect(db_file)
