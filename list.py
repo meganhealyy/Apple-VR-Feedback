@@ -19,6 +19,5 @@ conn.close()
 
 # Print a sample of the list
 print(f"Total rows: {len(feedback_list)}")
-print("Sample rows:")
-for row in feedback_list[:5]:  # Display the first 5 rows for review
+for row in feedback_list[:80]:  
     print(row)
