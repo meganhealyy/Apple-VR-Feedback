@@ -1,35 +1,11 @@
-import sqlite3
+import openai
 import pandas as pd
+import os
 
-# Path to your .db file
-db_file = 'feedback.db'  # Your database file
+# Set your OpenAI API key here
+openai.api_key = os.getenv("key")
 
-# Connect to the database
-conn = sqlite3.connect(db_file)
-
-# List all tables (optional, to identify tables)
-cursor = conn.cursor()
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-tables = cursor.fetchall()
-print("Tables in the database:", [table[0] for table in tables])
-
-# Read data from the 'feedback' table
-table_name = 'feedback'  # Replace with your table name if different
-query = f"SELECT * FROM {table_name};"
-
-# Load data into a pandas DataFrame
-df = pd.read_sql_query(query, conn)
-
-# Export the DataFrame to an Excel file
-output_file = 'feedback_output.xlsx'  # Update the path and filename as needed
-df.to_excel(output_file, index=False, engine='openpyxl')
-
-print(f"Data has been exported to {output_file}")
-
-# Close the database connection
-conn.close()
-
-# Example list of items (replace with your actual list)
+# Example list of feedback (replace with your actual list)
 items = [
 [1, "The immersive experience of the Apple Vision Pro is unlike anything I've tried before. However, the battery life doesn't last as long as I'd hoped, requiring frequent charging throughout the day."]
 [2, 'I love the sleek design of the Vision Pro, and it fits comfortably even during extended use. The materials feel premium, and it definitely turns heads.']
@@ -113,13 +89,29 @@ items = [
 [80, 'The Vision Pro works as advertised, but it doesn’t blow me away. It’s a fine addition to the Apple lineup, but it’s not a game-changer.']
 ]
 
-# Convert the list of items into a DataFrame
+# Convert the list to a DataFrame
 df = pd.DataFrame(items, columns=['id', 'comment'])
 
-# Export the DataFrame to an Excel file
-output_file = 'feedback_output.xlsx'  # Define your output file path and name
+# Function to analyze sentiment using OpenAI's API
+def get_sentiment(comment):
+    try:
+        # Call OpenAI's API for sentiment analysis
+        response = openai.Completion.create(
+            model="text-davinci-003",  # Or use GPT-4 if available
+            prompt=f"Analyze the sentiment of the following comment: '{comment}'. Provide a sentiment label: positive, negative, or neutral.",
+            max_tokens=10
+        )
+        sentiment = response['choices'][0]['text'].strip().lower()
+        return sentiment
+    except Exception as e:
+        print(f"Error analyzing sentiment: {e}")
+        return 'neutral'  # Default to neutral if error occurs
+
+# Apply the sentiment analysis to each comment
+df['sentiment'] = df['comment'].apply(get_sentiment)
+
+# Export the result to Excel
+output_file = 'feedback_with_sentiment.xlsx'
 df.to_excel(output_file, index=False, engine='openpyxl')
 
-print(f"Data has been exported to {output_file}")
-
-
+print(f"Feedback with sentiment analysis has been exported to {output_file}")
